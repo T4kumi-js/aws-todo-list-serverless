@@ -1,0 +1,17 @@
+CreateTask:
+  handler: src/infrastructure/lambda/tasks/create-task.handler
+  name: CreateTask
+  memorySize: 128
+  timeout: 5
+  environment:
+    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
+  events:
+    - http:
+        path: tasks
+        method: POST
+        cors: true
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - 'dynamodb:PutItem'
+      Resource: !GetAtt TasksTable.Arn

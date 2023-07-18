@@ -10,124 +10,55 @@ provider:
   deploymentBucket:
     name: todo-list-api-deploy-bucket
   environment:
-    TASKS_TABLE_NAME: ${self:custom.tasksTableName}
     ALLOWED_STATIC_SITE: ${self:custom.staticAddress}
 
 custom:
+  currentStage: ${opt:stage, self:provider.stage}
+  tableNames:
+    tasks: ${self:custom.currentStage}_Tasks
+  dynamodb:
+    stages:
+      - dev
+    start:
+      docker: true
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true
+      convertEmptyValues: true
+      noStart: true
+  serverless-offline:
+    httpPort: 4000
   esbuild:
     exclude:
       - '@aws-sdk/client-dynamodb'
       - '@aws-sdk/util-dynamodb'
-  tasksTableName: Tasks
-  staticBucketName: todo-list-static-web-bucket
-  staticAddress: https://${self:custom.staticBucketName}.s3.${self:provider.region}.amazonaws.com
+    target: 'node14'
+  staticAddress: !GetAtt StaticFrontEndCloudFront.DomainName
 
 plugins:
   - serverless-iam-roles-per-function
   - serverless-esbuild
+  - serverless-dynamodb-local
   - serverless-offline
 
 package:
   individually: true
 
 functions:
-  getAllTasks:
-    handler: src/functions/getAllTasks/index.handler
-    name: GetAllTasks
-    memorySize: 128
-    timeout: 5
-    events:
-      - http:
-          path: tasks
-          method: GET
-          cors: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - 'dynamodb:Scan'
-        Resource: !GetAtt TasksTable.Arn
-  createTask:
-    handler: src/functions/createTask/index.handler
-    name: CreateTask
-    memorySize: 128
-    timeout: 5
-    events:
-      - http:
-          path: tasks
-          method: POST
-          cors: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - 'dynamodb:PutItem'
-        Resource: !GetAtt TasksTable.Arn
-  updateTask:
-    handler: src/functions/updateTask/index.handler
-    name: UpdateTask
-    memorySize: 128
-    timeout: 5
-    events:
-      - http:
-          path: tasks/{taskId}
-          method: PUT
-          cors: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - 'dynamodb:UpdateItem'
-        Resource: !GetAtt TasksTable.Arn
-  deleteTask:
-    handler: src/functions/deleteTask/index.handler
-    name: DeleteTask
-    memorySize: 128
-    timeout: 5
-    events:
-      - http:
-          path: tasks/{taskId}
-          method: DELETE
-          cors: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - 'dynamodb:DeleteItem'
-        Resource: !GetAtt TasksTable.Arn
-  getTask:
-    handler: src/functions/getTask/index.handler
-    name: GetTask
-    memorySize: 128
-    timeout: 5
-    events:
-      - http:
-          path: tasks/{taskId}
-          method: GET
-          cors: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - 'dynamodb:GetItem'
-        Resource: !GetAtt TasksTable.Arn
-  markTaskAsCompleted:
-    handler: src/functions/markTaskAsCompleted/index.handler
-    name: MarkTaskAsCompleted
-    memorySize: 128
-    timeout: 5
-    events:
-      - http:
-          path: tasks/complete/{taskId}
-          method: PUT
-          cors: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - 'dynamodb:UpdateItem'
-        Resource: !GetAtt TasksTable.Arn
+  - ${file(./src/infrastructure/lambda/tasks/create-task.yml)}
+  - ${file(./src/infrastructure/lambda/tasks/update-task.yml)}
+  - ${file(./src/infrastructure/lambda/tasks/delete-task.yml)}
+  - ${file(./src/infrastructure/lambda/tasks/mark-task-as-completed.yml)}
+  - ${file(./src/infrastructure/lambda/tasks/find-all-tasks.yml)}
+  - ${file(./src/infrastructure/lambda/tasks/find-task-by-id.yml)}
 
 resources:
   Resources:
     TasksTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.tasksTableName}
+        TableName: ${self:custom.tableNames.tasks}
         AttributeDefinitions:
           - AttributeName: TaskId
             AttributeType: S
@@ -137,61 +68,61 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-    # StaticSiteBucket:
-    #   Type: AWS::S3::Bucket
-    #   Properties:
-    #     BucketName: ${self:custom.staticBucketName}
-    # StaticSiteBucketPolicy:
-    #   Type: AWS::S3::BucketPolicy
-    #   Properties:
-    #     Bucket: !Ref StaticSiteBucket
-    #     PolicyDocument:
-    #       Statement:
-    #         - Sid: PublicReadGetObject
-    #           Effect: Allow
-    #           Principal:
-    #             CanonicalUser: !GetAtt StaticSiteOriginAccessIdentity.S3CanonicalUserId
-    #           Action:
-    #             - 's3:GetObject'
-    #           Resource:
-    #             Fn::Join: ['/', [!GetAtt StaticSiteBucket.Arn, '*']]
-    # StaticSiteOriginAccessIdentity:
-    #   Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    #   Properties:
-    #     CloudFrontOriginAccessIdentityConfig:
-    #       Comment: Origin Access Identity to Access Website Bucket
-    # StaticSiteCloudFront:
-    #   Type: AWS::CloudFront:Distribution
-    #   DependsOn:
-    #     - StaticSiteBucket
-    #   Properties:
-    #     DistributionConfig:
-    #       Origins:
-    #         - DomainName: !GetAtt StaticSiteBucket.DomainName
-    #           Id: S3Origin
-    #           S3OriginConfig:
-    #             OriginAccessIdentity:
-    #               Fn::Join: ['/', ['origin-access-identity', 'cloudfront', !Ref StaticSiteOriginAccessIdentity]]
-    #       CustomErrorResponses:
-    #         - ErrorCachingMinTTL: 0
-    #           ErrorCode: 403
-    #           ResponseCode: 200
-    #           ResponsePagePath: /index.html
-    #       DefaultCacheBehavior:
-    #         AllowedMethods:
-    #           - GET
-    #           - HEAD
-    #         Compress: true
-    #         ForwardedValues:
-    #           QueryString: true
-    #           Cookies:
-    #             Forward: none
-    #         TargetOriginId: S3Origin
-    #         ViewerProtocolPolicy: redirect-to-https
-    #       DefaultRootObject: index.html
-    #       Enabled: true
-    #       HttpVersion: http2
-    #       PriceClass: PriceClass_All
-    #       ViewerCertificate:
-    #         CloudFrontDefaultCertificate: true
-    #       Comment: Static Site CloudFront configuration
+    StaticFrontEndBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: todo-list-static-web-bucket
+    StaticFrontEndOriginAccessIdentity:
+      Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: Origin Access Identity to Access Website Bucket
+    StaticFrontEndBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref StaticFrontEndBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal:
+                CanonicalUser: !GetAtt StaticFrontEndOriginAccessIdentity.S3CanonicalUserId
+              Action:
+                - 's3:GetObject'
+              Resource:
+                Fn::Join: ['/', [!GetAtt StaticFrontEndBucket.Arn, '*']]
+    StaticFrontEndCloudFront:
+      Type: AWS::CloudFront::Distribution
+      DependsOn:
+        - StaticFrontEndBucket
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName: !GetAtt StaticFrontEndBucket.DomainName
+              Id: S3Origin
+              S3OriginConfig:
+                OriginAccessIdentity:
+                  Fn::Join: ['/', ['origin-access-identity', 'cloudfront', !Ref StaticFrontEndOriginAccessIdentity]]
+          CustomErrorResponses:
+            - ErrorCachingMinTTL: 0
+              ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: none
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+          DefaultRootObject: index.html
+          Enabled: true
+          HttpVersion: http2
+          PriceClass: PriceClass_All
+          ViewerCertificate:
+            CloudFrontDefaultCertificate: true
+          Comment: Static Front-end CloudFront configuration

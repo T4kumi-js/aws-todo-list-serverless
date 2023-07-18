@@ -1,0 +1,17 @@
+UpdateTask:
+  handler: src/infrastructure/lambda/tasks/update-task.handler
+  name: UpdateTask
+  memorySize: 128
+  timeout: 5
+  environment:
+    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
+  events:
+    - http:
+        path: tasks/{taskId}
+        method: PUT
+        cors: true
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - 'dynamodb:UpdateItem'
+      Resource: !GetAtt TasksTable.Arn
