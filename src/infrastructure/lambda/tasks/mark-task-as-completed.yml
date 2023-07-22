@@ -13,5 +13,6 @@ MarkTaskAsCompleted:
   iamRoleStatements:
     - Effect: Allow
       Action:
+        - 'dynamodb:GetItem'
         - 'dynamodb:UpdateItem'
       Resource: !GetAtt TasksTable.Arn
