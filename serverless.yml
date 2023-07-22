@@ -34,7 +34,8 @@ custom:
       - '@aws-sdk/client-dynamodb'
       - '@aws-sdk/util-dynamodb'
     target: 'node14'
-  staticAddress: !GetAtt StaticFrontEndCloudFront.DomainName
+  staticAddress:
+    Fn::Join: ['', ['https://', !GetAtt StaticFrontEndCloudFront.DomainName]]
 
 plugins:
   - serverless-iam-roles-per-function
