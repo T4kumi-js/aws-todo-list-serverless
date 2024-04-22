@@ -1,10 +1,10 @@
-# project-specific directories
-static
+# project-specific files and directories
+.build
+.env
+.esbuild
+.serverless
+build
 
 # package directories
 node_modules
 jspm_packages
-
-# Serverless directories
-.serverless
-.esbuild

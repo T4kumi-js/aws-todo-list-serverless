@@ -1,37 +1,27 @@
-const Task = require('../../domain/entities/task.entity');
-const ITaskRespository = require('../../application/interfaces/repositories/task.repository');
-const { v4: uuidv4 } = require('uuid');
-const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
-const {
+import Task from '../../domain/entities/task.entity';
+import ITaskRespository from '../../application/interfaces/repositories/task.repository';
+import { v4 as uuidv4 } from 'uuid';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import {
   DynamoDBClient,
   PutItemCommand,
   UpdateItemCommand,
   DeleteItemCommand,
   GetItemCommand,
-  ScanCommand
-} = require('@aws-sdk/client-dynamodb');
+  ScanCommand,
+  AttributeValue
+} from '@aws-sdk/client-dynamodb';
 
-/**
- * @class
- * @implements {ITaskRespository}
- */
-class DynamoTaskRepository {
-  /**
-   * @param {{
-   *   dynamoClient: DynamoDBClient,
-   *   tableName: string
-   * }} dependencies
-   */
-  constructor({ dynamoClient, tableName }) {
-    this.dynamoClient = dynamoClient;
-    this.tableName = tableName;
+class DynamoTaskRepository implements ITaskRespository {
+  private dynamoClient: DynamoDBClient;
+  private tableName: string;
+
+  constructor(dependencies: { dynamoClient: DynamoDBClient, tableName: string }) {
+    this.dynamoClient = dependencies.dynamoClient;
+    this.tableName = dependencies.tableName;
   }
 
-  #mapEntityObject(data) {
-    if (!data) {
-      return null;
-    }
-
+  private mapEntityObject(data: Record<string, AttributeValue>): Task {
     const unmarshallData = unmarshall(data);
 
     return new Task({
@@ -44,7 +34,7 @@ class DynamoTaskRepository {
     });
   }
 
-  async create(task) {
+  async create(task: Task): Promise<Task> {
     const newId = uuidv4();
     const dateOfCreation = new Date();
 
@@ -70,7 +60,7 @@ class DynamoTaskRepository {
     return createdTask;
   }
 
-  async update(taskId, task) {
+  async update(taskId: string, task: Task): Promise<Task> {
     const dateOfUpdate = new Date();
 
     await this.dynamoClient.send(new UpdateItemCommand({
@@ -99,31 +89,39 @@ class DynamoTaskRepository {
     return updatedTask;
   }
 
-  async remove(taskId) {
+  async remove(taskId: string): Promise<void> {
     await this.dynamoClient.send(new DeleteItemCommand({
       TableName: this.tableName,
       Key: marshall({ TaskId: taskId })
     }));
   }
 
-  async findAll() {
+  async findAll(): Promise<Task[]> {
     const { Items } = await this.dynamoClient.send(new ScanCommand({
       TableName: this.tableName
     }));
 
-    const taskList = Items.map((item) => this.#mapEntityObject(item));
+    if (!Items) {
+      return [];
+    }
+
+    const taskList = Items.map((item) => this.mapEntityObject(item));
 
     return taskList;
   }
 
-  async findOneById(taskId) {
+  async findOneById(taskId: string): Promise<Task | null> {
     const { Item } = await this.dynamoClient.send(new GetItemCommand({
       TableName: this.tableName,
       Key: marshall({ TaskId: taskId })
     }));
 
-    return this.#mapEntityObject(Item);
+    if (Item) {
+      return this.mapEntityObject(Item);
+    } else {
+      return null;
+    }
   }
 }
 
-module.exports = DynamoTaskRepository;
+export default DynamoTaskRepository;

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2022",
+    "preserveConstEnums": true,
+    "resolveJsonModule": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "rootDir": "./src",
+    "outDir": "./build",
+    "baseUrl": "./src",
+    "moduleResolution": "node",
+    "lib": [
+      "ES2022"
+    ]
+  },
+  "include": [
+    "src/**/**.ts",
+    "tests/**/**.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
+}

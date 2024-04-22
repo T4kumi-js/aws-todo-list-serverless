@@ -1,4 +1,4 @@
-function transformBody(body) {
+function transformBody(body: any): any {
   const data = (typeof body === 'string')
     ? JSON.parse(body)
     : body;
@@ -6,4 +6,4 @@ function transformBody(body) {
   return data;
 }
 
-module.exports = transformBody;
+export default transformBody;

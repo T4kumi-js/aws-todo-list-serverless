@@ -1,9 +1,8 @@
 class EntityNotFoundError extends Error {
-  /**
-   * @param {string} entityName
-   * @param {any} criteria
-   */
-  constructor(entityName, criteria) {
+  public statusCode: number;
+  public criteria: any;
+
+  constructor(entityName: string, criteria: any) {
     super(`${entityName} not found`);
     this.name = 'EntityNotFoundError';
     this.statusCode = 404;
@@ -11,4 +10,4 @@ class EntityNotFoundError extends Error {
   }
 }
 
-module.exports = EntityNotFoundError;
+export default EntityNotFoundError;

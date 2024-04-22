@@ -5,7 +5,7 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: sa-east-1
   deploymentBucket:
     name: todo-list-api-deploy-bucket
@@ -13,10 +13,10 @@ provider:
     ALLOWED_STATIC_SITE: ${self:custom.staticAddress}
 
 custom:
-  currentStage: ${opt:stage, self:provider.stage}
+  currentStage: ${self:provider.stage}
   tableNames:
     tasks: ${self:custom.currentStage}_Tasks
-  dynamodb:
+  serverless-dynamodb:
     stages:
       - dev
     start:
@@ -33,26 +33,20 @@ custom:
     exclude:
       - '@aws-sdk/client-dynamodb'
       - '@aws-sdk/util-dynamodb'
-    target: 'node14'
+    target: 'node18'
   staticAddress:
     Fn::Join: ['', ['https://', !GetAtt StaticFrontEndCloudFront.DomainName]]
 
 plugins:
   - serverless-iam-roles-per-function
   - serverless-esbuild
-  - serverless-dynamodb-local
+  - serverless-dynamodb
   - serverless-offline
 
 package:
   individually: true
 
-functions:
-  - ${file(./src/infrastructure/lambda/tasks/create-task.yml)}
-  - ${file(./src/infrastructure/lambda/tasks/update-task.yml)}
-  - ${file(./src/infrastructure/lambda/tasks/delete-task.yml)}
-  - ${file(./src/infrastructure/lambda/tasks/mark-task-as-completed.yml)}
-  - ${file(./src/infrastructure/lambda/tasks/find-all-tasks.yml)}
-  - ${file(./src/infrastructure/lambda/tasks/find-task-by-id.yml)}
+functions: ${file(./resources/functions.yml)}
 
 resources:
   Resources:
