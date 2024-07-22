@@ -1,16 +1,19 @@
-import { IUpdateTaskUseCase, UpdateTaskRequest } from '../../interfaces/use-cases/tasks/update-task.use-case';
-import ITaskRepository from '../../interfaces/repositories/task.repository';
-import EntityNotFoundError from '../../errors/entity-not-found.error';
-import Task from '../../../domain/entities/task.entity';
+import IUpdateTaskUseCase from '../interfaces/use-cases/update-task.use-case';
+import ITaskRepository from '../interfaces/repositories/task.repository';
+import UpdateTaskRequest from '../domain/update-task-request';
+import Task from '../domain/task';
+import EntityNotFoundError from '../../../common/errors/entity-not-found.error';
 
 class UpdateTaskUseCase implements IUpdateTaskUseCase {
   private taskRepository: ITaskRepository;
 
-  constructor(dependencies: { taskRepository: ITaskRepository }) {
+  constructor(dependencies: {
+    taskRepository: ITaskRepository
+  }) {
     this.taskRepository = dependencies.taskRepository;
   }
 
-  async execute(taskId: string, data: UpdateTaskRequest): Promise<Task> {
+  async execute(taskId: string | number, data: UpdateTaskRequest): Promise<Task> {
     const task = await this.taskRepository.findOneById(taskId);
 
     if (!task) {

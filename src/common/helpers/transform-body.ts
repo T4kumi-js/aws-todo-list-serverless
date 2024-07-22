@@ -1,4 +1,4 @@
-function transformBody(body: any): any {
+function transformBody<RequestBody>(body: any): RequestBody {
   const data = (typeof body === 'string')
     ? JSON.parse(body)
     : body;

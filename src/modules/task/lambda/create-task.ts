@@ -1,24 +1,19 @@
 import { Handler, APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
-import CreateTaskUseCase from '../../../application/use-cases/tasks/create-task.use-case';
-import DynamoTaskRepository from '../../repositories/dynamo-task.repository';
-import dynamoClient from '../../dynamodb/client';
-import transformBody from '../helpers/transform-body';
-import { jsonResponse } from '../helpers/response';
+import CreateTaskRequest from '../domain/create-task-request';
+import CreateTaskUseCase from '../use-cases/create-task.use-case';
+import DynamoTaskRepository from '../repositories/dynamo-task.repository';
+import dynamoClient from '../../database/dynamodb';
+import transformBody from '../../../common/helpers/transform-body';
+import { jsonResponse } from '../../../common/helpers/response';
 
-const taskRepository = new DynamoTaskRepository({
-  dynamoClient,
-  tableName: process.env.TASK_TABLE_NAME!
-});
+const taskRepository = new DynamoTaskRepository({ dynamoClient });
+const createTaskUseCase = new CreateTaskUseCase({ taskRepository });
 
-const createTaskUseCase = new CreateTaskUseCase({
-  taskRepository
-});
-
-const createTask: Handler = async (
+export const handler: Handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResultV2> => {
   try {
-    const data = transformBody(event.body);
+    const data = transformBody<CreateTaskRequest>(event.body);
 
     const createdTask = await createTaskUseCase.execute(data);
 
@@ -26,8 +21,4 @@ const createTask: Handler = async (
   } catch (error) {
     return jsonResponse<Error>(error, error.statusCode || 500);
   }
-};
-
-export {
-  createTask as handler
 };

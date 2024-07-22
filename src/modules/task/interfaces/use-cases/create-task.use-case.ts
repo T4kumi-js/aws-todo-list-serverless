@@ -1,15 +1,8 @@
-import Task from '../../../../domain/entities/task.entity';
-
-type CreateTaskRequest = {
-  name: string;
-  description: string;
-};
+import CreateTaskRequest from '../../domain/create-task-request';
+import Task from '../../domain/task';
 
 interface ICreateTaskUseCase {
   execute(data: CreateTaskRequest): Promise<Task>;
 }
 
-export {
-  ICreateTaskUseCase,
-  CreateTaskRequest
-};
+export default ICreateTaskUseCase;

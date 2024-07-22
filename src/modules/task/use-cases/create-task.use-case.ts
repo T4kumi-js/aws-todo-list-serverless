@@ -1,11 +1,14 @@
-import { ICreateTaskUseCase, CreateTaskRequest } from '../../interfaces/use-cases/tasks/create-task.use-case';
-import ITaskRepository from '../../interfaces/repositories/task.repository';
-import Task from '../../../domain/entities/task.entity';
+import ICreateTaskUseCase from '../interfaces/use-cases/create-task.use-case';
+import ITaskRepository from '../interfaces/repositories/task.repository';
+import CreateTaskRequest from '../domain/create-task-request';
+import Task from '../domain/task';
 
 class CreateTaskUseCase implements ICreateTaskUseCase {
   private taskRepository: ITaskRepository;
 
-  constructor(dependencies: { taskRepository: ITaskRepository }) {
+  constructor(dependencies: {
+    taskRepository: ITaskRepository
+  }) {
     this.taskRepository = dependencies.taskRepository;
   }
 

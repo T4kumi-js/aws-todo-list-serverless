@@ -1,10 +1,8 @@
 CreateTask:
-  handler: src/infrastructure/lambda/tasks/create-task.handler
+  handler: src/modules/task/lambda/create-task.handler
   name: CreateTask
   memorySize: 128
   timeout: 5
-  environment:
-    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
   events:
     - http:
         path: tasks
@@ -16,12 +14,10 @@ CreateTask:
         - 'dynamodb:PutItem'
       Resource: !GetAtt TasksTable.Arn
 DeleteTask:
-  handler: src/infrastructure/lambda/tasks/delete-task.handler
+  handler: src/modules/task/lambda/delete-task.handler
   name: DeleteTask
   memorySize: 128
   timeout: 5
-  environment:
-    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
   events:
     - http:
         path: tasks/{taskId}
@@ -34,12 +30,10 @@ DeleteTask:
         - 'dynamodb:DeleteItem'
       Resource: !GetAtt TasksTable.Arn
 FindAllTasks:
-  handler: src/infrastructure/lambda/tasks/find-all-tasks.handler
+  handler: src/modules/task/lambda/find-all-tasks.handler
   name: FindAllTasks
   memorySize: 128
   timeout: 5
-  environment:
-    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
   events:
     - http:
         path: tasks
@@ -51,12 +45,10 @@ FindAllTasks:
         - 'dynamodb:Scan'
       Resource: !GetAtt TasksTable.Arn
 FindTaskById:
-  handler: src/infrastructure/lambda/tasks/find-task-by-id.handler
+  handler: src/modules/task/lambda/find-task-by-id.handler
   name: FindTaskById
   memorySize: 128
   timeout: 5
-  environment:
-    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
   events:
     - http:
         path: tasks/{taskId}
@@ -68,12 +60,10 @@ FindTaskById:
         - 'dynamodb:GetItem'
       Resource: !GetAtt TasksTable.Arn
 MarkTaskAsCompleted:
-  handler: src/infrastructure/lambda/tasks/mark-task-as-completed.handler
+  handler: src/modules/task/lambda/mark-task-as-completed.handler
   name: MarkTaskAsCompleted
   memorySize: 128
   timeout: 5
-  environment:
-    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
   events:
     - http:
         path: tasks/complete/{taskId}
@@ -86,12 +76,10 @@ MarkTaskAsCompleted:
         - 'dynamodb:UpdateItem'
       Resource: !GetAtt TasksTable.Arn
 UpdateTask:
-  handler: src/infrastructure/lambda/tasks/update-task.handler
+  handler: src/modules/task/lambda/update-task.handler
   name: UpdateTask
   memorySize: 128
   timeout: 5
-  environment:
-    TASK_TABLE_NAME: ${self:custom.tableNames.tasks}
   events:
     - http:
         path: tasks/{taskId}
@@ -103,3 +91,6 @@ UpdateTask:
         - 'dynamodb:GetItem'
         - 'dynamodb:UpdateItem'
       Resource: !GetAtt TasksTable.Arn
+# CreateUser:
+#   handler: src/infrastructure/lambda/users/create-user.handler
+#   name: CreateUser

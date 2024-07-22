@@ -1,4 +1,4 @@
-import Task from '../../../../domain/entities/task.entity';
+import Task from '../../domain/task';
 
 interface IFindAllTasksUseCase {
   execute(): Promise<Task[]>;

@@ -1,15 +1,8 @@
-import Task from '../../../../domain/entities/task.entity';
-
-type UpdateTaskRequest = {
-  name: string;
-  description: string;
-};
+import UpdateTaskRequest from '../../domain/update-task-request';
+import Task from '../../domain/task';
 
 interface IUpdateTaskUseCase {
-  execute(taskId: string, data: UpdateTaskRequest): Promise<Task>;
+  execute(taskId: string | number, data: UpdateTaskRequest): Promise<Task>;
 }
 
-export {
-  IUpdateTaskUseCase,
-  UpdateTaskRequest
-};
+export default IUpdateTaskUseCase;

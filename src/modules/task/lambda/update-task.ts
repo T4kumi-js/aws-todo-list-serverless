@@ -1,34 +1,30 @@
 import { Handler, APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
-import UpdateTaskUseCase from '../../../application/use-cases/tasks/update-task.use-case';
-import DynamoTaskRepository from '../../repositories/dynamo-task.repository';
-import dynamoClient from '../../dynamodb/client';
-import transformBody from '../helpers/transform-body';
-import { jsonResponse } from '../helpers/response';
+import UpdateTaskRequest from '../domain/update-task-request';
+import UpdateTaskUseCase from '../use-cases/update-task.use-case';
+import DynamoTaskRepository from '../repositories/dynamo-task.repository';
+import dynamoClient from '../../database/dynamodb';
+import transformBody from '../../../common/helpers/transform-body';
+import { jsonResponse } from '../../../common/helpers/response';
 
-const taskRepository = new DynamoTaskRepository({
-  dynamoClient,
-  tableName: process.env.TASK_TABLE_NAME!
-});
+const taskRepository = new DynamoTaskRepository({ dynamoClient });
+const updateTaskUseCase = new UpdateTaskUseCase({ taskRepository });
 
-const updateTaskUseCase = new UpdateTaskUseCase({
-  taskRepository
-});
-
-const updateTask: Handler = async (
+export const handler: Handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResultV2> => {
   try {
     const taskId = event.pathParameters?.taskId;
-    const data = transformBody(event.body);
 
-    const updatedTask = await updateTaskUseCase.execute(taskId!, data);
+    if (!taskId) {
+      return jsonResponse<Error>(new Error('ID not specified'), 400);
+    }
+
+    const data = transformBody<UpdateTaskRequest>(event.body);
+
+    const updatedTask = await updateTaskUseCase.execute(taskId, data);
 
     return jsonResponse(updatedTask);
   } catch (error) {
-    return jsonResponse(error, error.statusCode || 500);
+    return jsonResponse<Error>(error, error.statusCode || 500);
   }
-};
-
-export {
-  updateTask as handler
 };

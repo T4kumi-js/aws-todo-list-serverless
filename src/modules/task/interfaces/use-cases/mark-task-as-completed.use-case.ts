@@ -1,7 +1,7 @@
-import Task from '../../../../domain/entities/task.entity';
+import Task from '../../domain/task';
 
 interface IMarkTaskAsCompletedUseCase {
-  execute(taskId: string): Promise<Task>;
+  execute(taskId: string | number): Promise<Task>;
 }
 
 export default IMarkTaskAsCompletedUseCase;

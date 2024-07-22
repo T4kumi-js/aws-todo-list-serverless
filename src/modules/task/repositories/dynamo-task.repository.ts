@@ -1,5 +1,5 @@
-import Task from '../../domain/entities/task.entity';
-import ITaskRespository from '../../application/interfaces/repositories/task.repository';
+import ITaskRespository from '../interfaces/repositories/task.repository';
+import Task from '../domain/task';
 import { v4 as uuidv4 } from 'uuid';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import {
@@ -16,9 +16,11 @@ class DynamoTaskRepository implements ITaskRespository {
   private dynamoClient: DynamoDBClient;
   private tableName: string;
 
-  constructor(dependencies: { dynamoClient: DynamoDBClient, tableName: string }) {
+  constructor(dependencies: {
+    dynamoClient: DynamoDBClient
+  }) {
     this.dynamoClient = dependencies.dynamoClient;
-    this.tableName = dependencies.tableName;
+    this.tableName = `${process.env.STAGE!}_Tasks`;
   }
 
   private mapEntityObject(data: Record<string, AttributeValue>): Task {
@@ -29,8 +31,8 @@ class DynamoTaskRepository implements ITaskRespository {
       name: unmarshallData.Name,
       description: unmarshallData.Description,
       isCompleted: (unmarshallData.IsCompleted) ? true : false,
-      createdAt: unmarshallData.CreatedAt,
-      updatedAt: unmarshallData.UpdatedAt
+      createdAt: new Date(unmarshallData.CreatedAt),
+      updatedAt: new Date(unmarshallData.UpdatedAt)
     });
   }
 
@@ -60,7 +62,7 @@ class DynamoTaskRepository implements ITaskRespository {
     return createdTask;
   }
 
-  async update(taskId: string, task: Task): Promise<Task> {
+  async update(taskId: string | number, task: Task): Promise<Task> {
     const dateOfUpdate = new Date();
 
     await this.dynamoClient.send(new UpdateItemCommand({
@@ -89,7 +91,7 @@ class DynamoTaskRepository implements ITaskRespository {
     return updatedTask;
   }
 
-  async remove(taskId: string): Promise<void> {
+  async remove(taskId: string | number): Promise<void> {
     await this.dynamoClient.send(new DeleteItemCommand({
       TableName: this.tableName,
       Key: marshall({ TaskId: taskId })
@@ -110,7 +112,7 @@ class DynamoTaskRepository implements ITaskRespository {
     return taskList;
   }
 
-  async findOneById(taskId: string): Promise<Task | null> {
+  async findOneById(taskId: string | number): Promise<Task | null> {
     const { Item } = await this.dynamoClient.send(new GetItemCommand({
       TableName: this.tableName,
       Key: marshall({ TaskId: taskId })

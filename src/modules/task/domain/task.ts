@@ -1,5 +1,5 @@
 type TaskProps = {
-  id?: string;
+  id?: string | number;
   name: string;
   description: string;
   isCompleted: boolean;
@@ -8,7 +8,7 @@ type TaskProps = {
 };
 
 class Task {
-  public id?: string;
+  public id?: string | number;
   public name: string;
   public description: string;
   public isCompleted: boolean;
