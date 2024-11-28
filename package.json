@@ -37,6 +37,7 @@
     "serverless-esbuild": "^1.52.1",
     "serverless-iam-roles-per-function": "^3.2.0",
     "serverless-offline": "^13.6.0",
+    "serverless-stage-manager": "^1.0.5",
     "ts-jest": "^29.2.3",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.5.3"
